@@ -2,13 +2,11 @@ package com.apexon.mcq.service;
 
 import com.apexon.mcq.entity.LearningProgress;
 import com.apexon.mcq.entity.Question;
-import com.apexon.mcq.exceptions.DuplicateProgressException;
 import com.apexon.mcq.repository.LearningProgressRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,35 +16,36 @@ public class LearningProgressService {
     @Autowired
     private LearningProgressRepository progressRepository;
 
-    public LearningProgress logProgress(LearningProgress progress) {
-        // Prevent duplicate entry for same user-area-date
-        if (progressRepository.existsByUserIdAndAreaIdAndDate(
-                progress.getUser().getId(),
-                progress.getArea().getId(),
-                progress.getDate())) {
-            throw new DuplicateProgressException("Progress for this area and date already logged.");
-        }
+    public LearningProgress createProgress(LearningProgress progress) {
         return progressRepository.save(progress);
     }
 
-    public List<LearningProgress> getProgressByUser(Long userId) {
-        return progressRepository.findByUserId(userId);
+    public List<LearningProgress> getProgressTimeline(Long userId) {
+        return progressRepository.findByUserIdOrderByDateAsc(userId);
     }
 
-    public List<LearningProgress> getProgressByUserAndArea(Long userId, Long areaId) {
-        return progressRepository.findByUserIdAndAreaId(userId, areaId);
+    public List<LearningProgress> getProgressByArea(Long userId, Long areaId) {
+        return progressRepository.findByUserIdAndAreaIdOrderByDateAsc(userId, areaId);
     }
 
-    public Optional<LearningProgress> getLatestProgress(Long userId, Long areaId) {
-        return progressRepository.findTopByUserIdAndAreaIdOrderByDateDesc(userId, areaId);
-    }
-
-    public List<LearningProgress> getProgressByDate(Long userId, LocalDate date) {
-        return progressRepository.findByUserIdAndDate(userId, date);
+    public Optional<LearningProgress> getProgressById(Long id) {
+        return progressRepository.findById(id);
     }
 
     public void deleteProgress(Long id) {
         progressRepository.deleteById(id);
+    }
+
+    public LearningProgress updateProgress(Long id, LearningProgress updatedProgress) {
+        Question question = new Question();
+
+        return progressRepository.findById(id).map(progress -> {
+            progress.setDate(updatedProgress.getDate());
+            progress.setArea(updatedProgress.getArea());
+            progress.setSummary(updatedProgress.getSummary());
+            progress.setProgressPercentage(updatedProgress.getProgressPercentage());
+            return progressRepository.save(progress);
+        }).orElseThrow(() -> new EntityNotFoundException("Progress not found"));
     }
 
 }

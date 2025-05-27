@@ -5,7 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import com.apexon.mcq.entity.Area;
 
 @Entity
 @Data
@@ -15,9 +18,30 @@ import java.util.List;
 public class Skill {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long skillId;
-    private String skillName;
+    private Long skillId;
+	private String skillName;
+    @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL)
+    private List<Area> areas = new ArrayList<>();
     @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL)
     private List<Question> questions;
 
+    public Long getSkillId() {
+		return skillId;
+	}
+	public void setSkillId(long skillId) {
+		this.skillId = skillId;
+	}
+	public String getSkillName() {
+		return skillName;
+	}
+	public void setSkillName(String skillName) {
+		this.skillName = skillName;
+	}
+	public List<Area> getAreas() {
+		return areas;
+	}
+	public void setAreas(List<Area> areas) {
+		this.areas = areas;
+	}
+	
 }

@@ -22,8 +22,6 @@ public class Skill {
 	private String skillName;
     @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL)
     private List<Area> areas = new ArrayList<>();
-    @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL)
-    private List<Question> questions;
 
     public Long getSkillId() {
 		return skillId;

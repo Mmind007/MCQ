@@ -16,15 +16,15 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "learning_progress")
-public class LearningProgress {
+public class LearningProgress extends Auditable<String>{
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @NotNull(message = "User is required")
-    @ManyToOne(optional = false) //NR, add id
-    private User user; //call the user service
+//    @NotNull(message = "User is required")
+//    @ManyToOne(optional = false) //NR, add id
+//    private User user; //call the user service
 
     @NotNull(message = "Area is required")
     @ManyToOne(optional = false) // NR if id
@@ -47,5 +47,5 @@ public class LearningProgress {
     private Integer progressPercentage;
 
 
-
+    //25 50 75
 }

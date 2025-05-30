@@ -1,5 +1,7 @@
 package com.apexon.mcq.controller;
 
+import com.apexon.mcq.dto.LearningProgressRequestDto;
+import com.apexon.mcq.dto.LearningProgressResponseDto;
 import com.apexon.mcq.entity.LearningProgress;
 import com.apexon.mcq.service.LearningProgressService;
 import jakarta.validation.Valid;
@@ -20,39 +22,43 @@ public class LearningProgressController {
     private LearningProgressService progressService;
 
     @PostMapping
-    public ResponseEntity<LearningProgress> logProgress(@Valid @RequestBody LearningProgress progress) {
+    public ResponseEntity<LearningProgressResponseDto> logProgress(@Valid @RequestBody LearningProgressRequestDto learningProgressRequestDto) {
         try {
-            return ResponseEntity.ok(progressService.logProgress(progress));
+            return ResponseEntity.ok(progressService.createProgress(learningProgressRequestDto));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
         }
     }
 
     @GetMapping("/user/{userId}")
-    public List<LearningProgress> getByUser(@PathVariable Long userId) {
+    public List<LearningProgressResponseDto> getProgressByUser(@PathVariable Long userId) {
         return progressService.getProgressByUser(userId);
     }
 
-    @GetMapping("/user/{userId}/area/{areaId}")
-    public List<LearningProgress> getByUserAndArea(@PathVariable Long userId, @PathVariable Long areaId) {
-        return progressService.getProgressByUserAndArea(userId, areaId);
+    // Progress by user + date range
+    @GetMapping("/{userId}")
+    public ResponseEntity<List<LearningProgressResponseDto>> getByUserAndDateRange(
+            @PathVariable Long userId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        if (startDate != null && endDate != null) {
+            return ResponseEntity.ok(progressService.getProgressByUserAndDateRange(userId, startDate, endDate));
+        } else {
+            return ResponseEntity.ok(progressService.getProgressByUser(userId));
+        }
     }
 
-    @GetMapping("/user/{userId}/area/{areaId}/latest")
-    public ResponseEntity<LearningProgress> getLatestProgress(@PathVariable Long userId, @PathVariable Long areaId) {
-        return progressService.getLatestProgress(userId, areaId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    // Progress summary per learning material
+    @GetMapping("/summary/{userId}")
+    public ResponseEntity<List<Object[]>> getSummaryPerMaterial(@PathVariable Long userId) {
+        return ResponseEntity.ok(progressService.getProgressSummaryPerLearningMaterial(userId));
     }
 
-    @GetMapping("/user/{userId}/date/{date}")
-    public List<LearningProgress> getByDate(@PathVariable Long userId,
-                                            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return progressService.getProgressByDate(userId, date);
+    // Update entry
+    @PutMapping("/{id}")
+    public ResponseEntity<LearningProgressResponseDto> updateLearningProgress(@PathVariable Long id, @RequestBody LearningProgressRequestDto lp) {
+        return ResponseEntity.ok(progressService.updateLearningProgress(id, lp));
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteProgress(@PathVariable Long id) {
-        progressService.deleteProgress(id);
-    }
 }

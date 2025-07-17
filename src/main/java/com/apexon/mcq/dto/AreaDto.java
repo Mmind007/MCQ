@@ -1,25 +1,20 @@
 package com.apexon.mcq.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class AreaDto {
-    private Long id;
+	
+	@NotBlank(message = "Area name must not be empty")
     private String name;
 
     // Constructors
     public AreaDto() {}
 
-    public AreaDto(Long id, String name) {
-        this.id = id;
+    public AreaDto(String name) {
         this.name = name;
     }
 
     // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getName() {
         return name;

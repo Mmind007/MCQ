@@ -2,28 +2,23 @@ package com.apexon.mcq.dto;
 
 import java.util.List;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class SkillDto {
-    private Long id;
+
+	@NotBlank(message = "Skill name must not be empty")
     private String name;
-    private List<AreaDto> areas;  // Optional: Include areas if you want nested data
+    private List<AreaDto> areas;
 
     // Constructors
     public SkillDto() {}
 
-    public SkillDto(Long id, String name, List<AreaDto> areas) {
-        this.id = id;
+    public SkillDto(String name, List<AreaDto> areas) {
         this.name = name;
         this.areas = areas;
     }
 
     // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getName() {
         return name;

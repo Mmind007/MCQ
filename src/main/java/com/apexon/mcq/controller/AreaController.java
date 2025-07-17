@@ -17,6 +17,8 @@ import com.apexon.mcq.dto.AreaDto;
 import com.apexon.mcq.entity.Area;
 import com.apexon.mcq.service.AreaService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/skillmgmt/skills/{skillId}/areas")
 public class AreaController {
@@ -25,19 +27,19 @@ public class AreaController {
     private AreaService areaService;
 
     @PostMapping
-    public ResponseEntity<AreaDto> createArea(@PathVariable Long skillId, @RequestBody Area area) {
-        AreaDto createdArea = areaService.createArea(skillId, area);
+    public ResponseEntity<AreaDto> createArea(@PathVariable Long skillId, @Valid @RequestBody AreaDto areaDto) {
+        AreaDto createdArea = areaService.createArea(skillId, areaDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdArea);
     }
     
     @PostMapping("/batch")
     public ResponseEntity<List<AreaDto>> createAreas(
             @PathVariable Long skillId,
-            @RequestBody List<Area> areas) {
+            @RequestBody List<AreaDto> areas) {
         List<AreaDto> createdAreas = areas.stream()
-            .map(area -> areaService.createArea(skillId, area))
+            .map(areaDto -> areaService.createArea(skillId, areaDto))
             .collect(Collectors.toList());
-
+        
         return ResponseEntity.status(HttpStatus.CREATED).body(createdAreas);
     }
 

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import com.apexon.mcq.dto.SkillDto;
 import com.apexon.mcq.entity.Skill;
+import com.apexon.mcq.exceptions.SkillBadRequestException;
+import com.apexon.mcq.exceptions.SkillResourceNotFoundException;
 import com.apexon.mcq.repository.SkillRepository;
 import com.apexon.mcq.utility.SkillMapper;
 
@@ -17,14 +19,15 @@ public class SkillService {
 	@Autowired
     private SkillRepository skillRepository;
 
-//    public SkillService(SkillRepository skillRepository) {
-//        this.skillRepository = skillRepository;
-//    }
-
-    public SkillDto createSkill(Skill skill) {
-        Skill skillRes =  skillRepository.save(skill);
-        SkillDto skillDto = SkillMapper.toDto(skillRes);
-        return skillDto;
+	public SkillDto createSkill(SkillDto skillDto) {
+		if (skillRepository.existsBySkillNameIgnoreCase(skillDto.getName())) {
+		    throw new SkillBadRequestException("Skill already exists with name: " + skillDto.getName());
+		}
+		
+        Skill skillEntity = SkillMapper.dtoToEntity(skillDto);
+        // Note: areas list is empty here as we do not take it from client input
+        Skill savedSkill = skillRepository.save(skillEntity);
+        return SkillMapper.toSkillDto(savedSkill);
     }
 
     public List<SkillDto> getAllSkills() {
@@ -32,7 +35,7 @@ public class SkillService {
     	
     	List<SkillDto> dtoList = new ArrayList<>();
     	for(Skill skill : skillList) {
-    		SkillDto skillDto = SkillMapper.toDto(skill);
+    		SkillDto skillDto = SkillMapper.toSkillDto(skill);
     		dtoList.add(skillDto);
     	}
     	
@@ -40,8 +43,34 @@ public class SkillService {
     }
 
 	public SkillDto getSkillById(long id) {
-		Skill skillRes = skillRepository.findById(id).orElse(null);
-		SkillDto skillDto = SkillMapper.toDto(skillRes);
+		Skill skillRes = skillRepository.findById(id)
+				.orElseThrow(() -> new SkillResourceNotFoundException("Skill with id " + id + " not found"));
+		SkillDto skillDto = SkillMapper.toSkillDto(skillRes);
 		return skillDto;
 	}
+	
+	public SkillDto updateSkill(long id, SkillDto skillDto) {
+	    Skill existingSkill = skillRepository.findById(id)
+	            .orElseThrow(() -> new SkillResourceNotFoundException("Skill with id " + id + " not found"));
+
+	    // Optional: check for name conflict with other skills
+	    if (!existingSkill.getSkillName().equalsIgnoreCase(skillDto.getName())
+	            && skillRepository.existsBySkillNameIgnoreCase(skillDto.getName())) {
+	        throw new SkillBadRequestException("Another skill already exists with name: " + skillDto.getName());
+	    }
+
+	    existingSkill.setSkillName(skillDto.getName());
+	    Skill updatedSkill = skillRepository.save(existingSkill);
+
+	    return SkillMapper.toSkillDto(updatedSkill);
+	}
+	
+	public void deleteSkill(long id) {
+	    Skill existingSkill = skillRepository.findById(id)
+	            .orElseThrow(() -> new SkillResourceNotFoundException("Skill with id " + id + " not found"));
+
+	    skillRepository.delete(existingSkill);
+	}
+
+
 }

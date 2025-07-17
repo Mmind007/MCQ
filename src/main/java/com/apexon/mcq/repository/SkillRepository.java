@@ -7,5 +7,5 @@ import com.apexon.mcq.entity.Skill;
 
 @Repository
 public interface SkillRepository extends JpaRepository<Skill, Long> {
-	
+	boolean existsBySkillNameIgnoreCase(String skillName);
 }

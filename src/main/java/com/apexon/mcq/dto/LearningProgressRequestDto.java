@@ -19,8 +19,11 @@ public class LearningProgressRequestDto {
     @NotNull(message = "User is required")
     private User user; //call the user service
 
-    @NotBlank
+    @NotNull
     private long learningMaterial;
+
+    @NotNull
+    private Long area;
 
     @Column(columnDefinition = "TEXT")
     @Size(max = 5000, message = "Summary can't exceed 5000 characters")
@@ -29,31 +32,5 @@ public class LearningProgressRequestDto {
     @Min(value = 0)
     @Max(value = 100)
     private long progressPercentage;
-
-    /*@Column(columnDefinition = "TEXT")
-    @Size(max = 5000, message = "Summary can't exceed 5000 characters")
-    private String nextPlan;*/
-
-
-
-    /*@NotNull(message = "Area is required")
-    @ManyToOne(optional = false) // NR if id
-    //call the service
-    private Area area; //may not be in package, prefer adding id*/
-
-
-        //auditing fields
-
-
-
-    /*@NotNull(message = "Progress percentage is required")
-    @Min(value = 0, message = "Progress cannot be less than 0")
-    @Max(value = 100, message = "Progress cannot exceed 100")
-    @Column(name = "progress_percentage", nullable = false)
-    private Integer progressPercentage;*/
-
-
-        //25 50 75
-
 
 }

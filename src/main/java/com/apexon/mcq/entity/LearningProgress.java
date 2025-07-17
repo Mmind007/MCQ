@@ -8,13 +8,19 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "learning_progress")
 public class LearningProgress {
 
@@ -22,33 +28,40 @@ public class LearningProgress {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-//    @NotNull(message = "User is required")
-    @ManyToOne(optional = false) //NR, add id
-    private User user; //call the user service
+    @NotNull(message = "User is required")
+    @ManyToOne(optional = false)
+    private User user;
 
-//    @NotNull(message = "Learning Material")
+    @NotNull(message = "Learning Material")
     @OneToOne(optional = false)
     private LearningMaterial learningMaterial;
 
-    /*@NotNull(message = "Area is required")
-    @ManyToOne(optional = false) // NR if id
-    //call the service
-    private Area area; //may not be in package, prefer adding id*/
+    @NotNull(message = "Area is required")
+    @ManyToOne(optional = false)
+    private Area area;
 
-//    @NotNull(message = "Date is required")
-//    @Column(nullable = false)
-    private LocalDate date;
-    //auditing fields
-
-//    @Column(columnDefinition = "TEXT")
-//    @Size(max = 5000, message = "Summary can't exceed 5000 characters")
+    @Column(columnDefinition = "TEXT")
+    @Size(max = 5000, message = "Summary can't exceed 5000 characters")
     private String summary;
 
     @NotNull(message = "Progress percentage is required")
-    @Min(value = 0, message = "Progress cannot be less than 0")
-    @Max(value = 100, message = "Progress cannot exceed 100")
+    @Min(0)
+    @Max(100)
     @Column(name = "progress_percentage", nullable = false)
-    private long progressPercentage = 0;//25 50 75
+    private long progressPercentage = 0;
+
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+
+    @CreatedBy
+    private String createdBy;
+
+    @LastModifiedBy
+    private String updatedBy;
 
 
 }

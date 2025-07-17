@@ -7,20 +7,25 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface LearningProgressRepository extends JpaRepository<LearningProgress, Long> {
 
+    //progress logs for a user
     List<LearningProgress> findByUserId(Long userId);
 
     // Find progress by user within a date range
-    List<LearningProgress> findByUserIdAndDateBetweenOrderByDateAsc(Long userId, LocalDate startDate, LocalDate endDate);
+    List<LearningProgress> findByUserIdAndCreatedAtBetweenOrderByCreatedAtAsc(Long userId, LocalDateTime startDate, LocalDateTime endDate);
 
     // Summary per learning material (latest progress per material)
-    @Query("SELECT lp.learningMaterial.id, MAX(lp.progressPercentage) FROM LearningProgress lp " +
+    @Query("SELECT lp.learningMaterial.id AS learningMaterialId, MAX(lp.progressPercentage) AS maxProgress,lp.summary FROM LearningProgress lp " +
             "WHERE lp.user.id = :userId GROUP BY lp.learningMaterial.id")
     List<Object[]> findProgressSummaryPerLearningMaterial(@Param("userId") Long userId);
+
+    // History for a material
+    List<LearningProgress> findByUserIdAndLearningMaterialIdOrderByCreatedAtAsc(Long userId, Long learningMaterialId);
+
 
 }

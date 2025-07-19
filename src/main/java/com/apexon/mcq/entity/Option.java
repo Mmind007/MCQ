@@ -1,5 +1,6 @@
 package com.apexon.mcq.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,5 +24,6 @@ public class Option {
 
         @ManyToOne
         @JoinColumn(name = "question_id")
+        @JsonBackReference
         private Question question;
 }

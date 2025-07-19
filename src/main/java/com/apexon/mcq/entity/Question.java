@@ -1,4 +1,5 @@
 package com.apexon.mcq.entity;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,6 +28,16 @@ public class Question {
     private String explanation;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<Option> options;
+
+    @Column(nullable = false)
+    private String correctOption; // values like "A", "B", "C", or "D"
+
+    @ManyToOne
+    @JoinColumn(name = "area_id", nullable = false)
+    private Area area;
+
+
 
 }

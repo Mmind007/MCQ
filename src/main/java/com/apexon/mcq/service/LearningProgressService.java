@@ -54,15 +54,12 @@ public class LearningProgressService {
 
         try {
 //            User user = fetchUserById(learningProgressRequestDto.getUser().getId());
-//            Area area = fetchAreaById(learningProgressRequestDto.getArea());
-
+            Area area = fetchAreaById(learningProgressRequestDto.getArea());
             boolean user = userRepository.existsById(learningProgressRequestDto.getUserId());
-
-            boolean area = areaRepository.existsById(learningProgressRequestDto.getArea());
 
             if (!user) throw new ResourceNotFoundException("User Not Found");
 
-            if (!area)
+            if (area==null)
                 throw new ResourceNotFoundException("Area Not Found");
 
 

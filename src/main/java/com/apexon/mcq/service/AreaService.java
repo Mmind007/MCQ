@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.apexon.mcq.dto.AreaDto;
@@ -39,7 +41,7 @@ public class AreaService {
         return dto;
     }
 
-    public List<AreaDto> getAreasBySkill(Long skillId) {
+    public ResponseEntity<List<AreaDto>> getAreasBySkill(Long skillId) {
     	List<Area> areaList = areaRepository.findAll().stream()
             .filter(area -> area.getSkill().getSkillId().equals(skillId))
             .collect(Collectors.toList());
@@ -56,6 +58,36 @@ public class AreaService {
     		areaDtoList.add(areaDto);
     	}
     	
-    	return areaDtoList;
+    	return new ResponseEntity<List<AreaDto>>(areaDtoList, HttpStatus.OK);
     }
+
+	public ResponseEntity<AreaDto> getAreaByAreaId(Long areaId) {
+		Area area = areaRepository.findById(areaId).orElseThrow(() -> new SkillResourceNotFoundException("Area with id " + areaId + " not found"));
+		AreaDto areaDto = SkillMapper.toAreaDto(area);
+		return new ResponseEntity<AreaDto>(areaDto, HttpStatus.OK);
+	}
+	
+	public AreaDto updateArea(long id, AreaDto areaDto) {
+	    Area existingArea = areaRepository.findById(id)
+	            .orElseThrow(() -> new SkillResourceNotFoundException("Area with id " + id + " not found"));
+
+	    // Optional: check for name conflict with other skills
+	    if (!existingArea.getName().equalsIgnoreCase(areaDto.getName())
+	            && areaRepository.existsByNameIgnoreCase(areaDto.getName())) {
+	        throw new SkillBadRequestException("Another area already exists with name: " + areaDto.getName());
+	    }
+
+	    existingArea.setName(areaDto.getName());
+	    Area updatedArea = areaRepository.save(existingArea);
+
+	    return SkillMapper.toAreaDto(updatedArea);
+	}
+	
+	public void deleteArea(long id) {
+	    Area existingArea = areaRepository.findById(id)
+	            .orElseThrow(() -> new SkillResourceNotFoundException("Area with id " + id + " not found"));
+
+	    areaRepository.delete(existingArea);
+	}
+
 }

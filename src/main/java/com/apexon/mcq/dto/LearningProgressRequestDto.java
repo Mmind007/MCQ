@@ -15,14 +15,17 @@ import java.time.LocalDate;
 @Setter
 public class LearningProgressRequestDto {
 
+    public interface Create {}
+    public interface Update {}
+
 
     @NotNull(message = "User is required")
-    private User user; //call the user service
+    private Long userId;
 
-    @NotNull
-    private long learningMaterial;
+    @NotNull(groups = Create.class, message = "Learning Material ID is required")
+    private Long learningMaterial;
 
-    @NotNull
+    @NotNull(groups = Create.class, message = "Area ID is required")
     private Long area;
 
     @Column(columnDefinition = "TEXT")
@@ -31,6 +34,6 @@ public class LearningProgressRequestDto {
 
     @Min(value = 0)
     @Max(value = 100)
-    private long progressPercentage;
+    private Long progressPercentage;
 
 }

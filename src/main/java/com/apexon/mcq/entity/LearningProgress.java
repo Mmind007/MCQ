@@ -29,16 +29,29 @@ public class LearningProgress {
     private Long id;
 
     @NotNull(message = "User is required")
-    @ManyToOne(optional = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    @NotNull(message = "Learning Material")
-    @OneToOne(optional = false)
-    private LearningMaterial learningMaterial;
+    @NotNull(message = "Learning Material is required")
+    @Column(name = "learning_material_id", nullable = false)
+    private Long learningMaterialId;
 
     @NotNull(message = "Area is required")
-    @ManyToOne(optional = false)
-    private Area area;
+    @Column(name = "area_id", nullable = false)
+    private Long areaId;
+
+
+//    @NotNull(message = "User is required")
+//    @ManyToOne(optional = false)
+//    private User user;
+//
+//    @NotNull(message = "Learning Material")
+//    @OneToOne(optional = false)
+//    private LearningMaterial learningMaterial;
+//
+//    @NotNull(message = "Area is required")
+//    @ManyToOne(optional = false)
+//    private Area area;
 
     @Column(columnDefinition = "TEXT")
     @Size(max = 5000, message = "Summary can't exceed 5000 characters")

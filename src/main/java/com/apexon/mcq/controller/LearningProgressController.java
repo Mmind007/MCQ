@@ -1,14 +1,14 @@
 package com.apexon.mcq.controller;
 
-import com.apexon.mcq.dto.LearningProgressRequestDto;
 import com.apexon.mcq.dto.LearningProgressDto;
+import com.apexon.mcq.dto.LearningProgressRequestDto;
 import com.apexon.mcq.dto.ProgressSummaryDTO;
 import com.apexon.mcq.service.LearningProgressService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -24,7 +24,7 @@ public class LearningProgressController {
     private LearningProgressService progressService;
 
     @PostMapping
-    public ResponseEntity<LearningProgressDto> logProgress(@Valid @RequestBody LearningProgressRequestDto learningProgressRequestDto) {
+    public ResponseEntity<LearningProgressDto> logProgress(@Validated(LearningProgressRequestDto.Create.class) @RequestBody LearningProgressRequestDto learningProgressRequestDto) {
         try {
             return ResponseEntity.ok(progressService.createProgress(learningProgressRequestDto));
         } catch (IllegalArgumentException ex) {
@@ -62,7 +62,7 @@ public class LearningProgressController {
 
     // Update entry
     @PutMapping("/{id}")
-    public ResponseEntity<LearningProgressDto> updateLearningProgress(@PathVariable Long id,@Valid @RequestBody LearningProgressRequestDto lp) {
+    public ResponseEntity<LearningProgressDto> updateLearningProgress(@PathVariable Long id, @Validated(LearningProgressRequestDto.Update.class) @RequestBody LearningProgressRequestDto lp) {
         return ResponseEntity.ok(progressService.updateLearningProgress(id, lp));
     }
 

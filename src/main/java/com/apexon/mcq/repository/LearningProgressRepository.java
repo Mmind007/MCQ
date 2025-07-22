@@ -20,9 +20,10 @@ public interface LearningProgressRepository extends JpaRepository<LearningProgre
     List<LearningProgress> findByUserIdAndCreatedAtBetweenOrderByCreatedAtAsc(Long userId, LocalDateTime startDate, LocalDateTime endDate);
 
     // Summary per learning material (latest progress per material)
-    @Query("SELECT lp.learningMaterial.id AS learningMaterialId, MAX(lp.progressPercentage) AS maxProgress,lp.summary FROM LearningProgress lp " +
-            "WHERE lp.user.id = :userId GROUP BY lp.learningMaterial.id")
+    @Query("SELECT lp.learningMaterialId, MAX(lp.progressPercentage), lp.summary" +
+            " FROM LearningProgress lp WHERE lp.userId = :userId GROUP BY lp.learningMaterialId")
     List<Object[]> findProgressSummaryPerLearningMaterial(@Param("userId") Long userId);
+
 
     // History for a material
     List<LearningProgress> findByUserIdAndLearningMaterialIdOrderByCreatedAtAsc(Long userId, Long learningMaterialId);

@@ -1,7 +1,7 @@
 package com.apexon.mcq.service;
 
-import com.apexon.mcq.dto.LearningProgressRequestDto;
 import com.apexon.mcq.dto.LearningProgressDto;
+import com.apexon.mcq.dto.LearningProgressRequestDto;
 import com.apexon.mcq.dto.ProgressSummaryDTO;
 import com.apexon.mcq.entity.Area;
 import com.apexon.mcq.entity.LearningMaterial;
@@ -11,14 +11,16 @@ import com.apexon.mcq.exceptions.BadRequestException;
 import com.apexon.mcq.exceptions.OperationFailedException;
 import com.apexon.mcq.exceptions.ResourceNotFoundException;
 import com.apexon.mcq.repository.AreaRepository;
-import com.apexon.mcq.repository.LearningMaterialRepository;
 import com.apexon.mcq.repository.LearningProgressRepository;
 import com.apexon.mcq.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +33,16 @@ public class LearningProgressService {
     private LearningProgressRepository progressRepository;
 
     @Autowired
-    private LearningMaterialRepository learningMaterialRepository;
+    private RestTemplate restTemplate;
+
+    @Value("${user.service.url}")
+    private String userServiceUrl;
+
+    @Value("${area.service.url}")
+    private String areaServiceUrl;
+
+    @Value("${material.service.url}")
+    private String materialServiceUrl;
 
     @Autowired
     private UserRepository userRepository;
@@ -42,40 +53,69 @@ public class LearningProgressService {
     public LearningProgressDto createProgress(LearningProgressRequestDto learningProgressRequestDto) {
 
         try {
+//            User user = fetchUserById(learningProgressRequestDto.getUser().getId());
+//            Area area = fetchAreaById(learningProgressRequestDto.getArea());
 
-            User user = userRepository.findById(learningProgressRequestDto.getUser().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User Not Found"));
+            boolean user = userRepository.existsById(learningProgressRequestDto.getUserId());
 
-            Area area = areaRepository.findById(learningProgressRequestDto.getArea())
-                    .orElseThrow(() -> new ResourceNotFoundException("Area Not Found"));
+            boolean area = areaRepository.existsById(learningProgressRequestDto.getArea());
 
-            LearningMaterial learningMaterial = learningMaterialRepository.findById(learningProgressRequestDto.getLearningMaterial())
-                    .orElseThrow(() -> new ResourceNotFoundException("Learning Material Not Available"));
+            if (!user) throw new ResourceNotFoundException("User Not Found");
 
-            LearningProgress learningProgress = new LearningProgress();
-            learningProgress.setCreatedAt(LocalDateTime.now());
-            learningProgress.setUser(user);
-            learningProgress.setArea(area);
-            learningProgress.setLearningMaterial(learningMaterial);
-            learningProgress.setSummary(learningProgressRequestDto.getSummary());
-            learningProgress.setProgressPercentage(learningProgressRequestDto.getProgressPercentage());
+            if (!area)
+                throw new ResourceNotFoundException("Area Not Found");
 
-            progressRepository.save(learningProgress);
 
-            return LearningProgressDto.builder()
-                    .learningProgressId(learningProgress.getId())
-                    .progressPercentage(learningProgress.getProgressPercentage())
-                    .user(user)
-                    .summary(learningProgress.getSummary())
-                    .localDate(learningProgress.getCreatedAt())
-                    .learningMaterial(learningMaterial)
-                    .build();
+            LearningMaterial material = fetchLearningMaterialById(learningProgressRequestDto.getLearningMaterial());
 
+
+            LearningProgress progress = new LearningProgress();
+            progress.setUserId(learningProgressRequestDto.getUserId());
+            progress.setAreaId(learningProgressRequestDto.getArea());
+            progress.setLearningMaterialId(learningProgressRequestDto.getLearningMaterial());
+            progress.setSummary(learningProgressRequestDto.getSummary());
+            progress.setProgressPercentage(learningProgressRequestDto.getProgressPercentage());
+
+            progressRepository.save(progress);
+            return convertToResponseDto(progress, material);
 
         } catch (BadRequestException | ResourceNotFoundException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new OperationFailedException("Failed to save learning progress", ex);
+        }
+    }
+
+    private User fetchUserById(Long userId) {
+        try {
+            ResponseEntity<User> response = restTemplate.getForEntity(userServiceUrl + userId, User.class);
+            return response.getBody();
+        } catch (HttpClientErrorException.NotFound ex) {
+            throw new ResourceNotFoundException("User not found with id: " + userId);
+        } catch (Exception ex) {
+            throw new OperationFailedException("Failed to fetch User from User service", ex);
+        }
+    }
+
+    private Area fetchAreaById(Long areaId) {
+        try {
+            ResponseEntity<Area> response = restTemplate.getForEntity(areaServiceUrl + areaId, Area.class);
+            return response.getBody();
+        } catch (HttpClientErrorException.NotFound ex) {
+            throw new ResourceNotFoundException("Area not found with id: " + areaId);
+        } catch (Exception ex) {
+            throw new OperationFailedException("Failed to fetch Area from Area service", ex);
+        }
+    }
+
+    private LearningMaterial fetchLearningMaterialById(Long materialId) {
+        try {
+            ResponseEntity<LearningMaterial> response = restTemplate.getForEntity(materialServiceUrl + materialId, LearningMaterial.class);
+            return response.getBody();
+        } catch (HttpClientErrorException.NotFound ex) {
+            throw new ResourceNotFoundException("Learning Material not found with id: " + materialId);
+        } catch (Exception ex) {
+            throw new OperationFailedException("Failed to fetch Learning Material from Material service", ex);
         }
     }
 
@@ -94,7 +134,8 @@ public class LearningProgressService {
             List<LearningProgressDto> learningProgressResponseDtoList = new ArrayList<>();
 
             for (LearningProgress learningProgress : learningProgressList) {
-                LearningProgressDto learningProgressResponseDto = convertToResponseDto(learningProgress);
+                LearningMaterial material = fetchLearningMaterialById(learningProgress.getLearningMaterialId());
+                LearningProgressDto learningProgressResponseDto = convertToResponseDto(learningProgress, material);
                 learningProgressResponseDtoList.add(learningProgressResponseDto);
             }
 
@@ -119,7 +160,8 @@ public class LearningProgressService {
             List<LearningProgressDto> learningProgressResponseDtoList = new ArrayList<>();
 
             for (LearningProgress learningProgress : learningProgressList) {
-                LearningProgressDto learningProgressResponseDto = convertToResponseDto(learningProgress);
+                LearningMaterial material = fetchLearningMaterialById(learningProgress.getLearningMaterialId());
+                LearningProgressDto learningProgressResponseDto = convertToResponseDto(learningProgress, material);
                 learningProgressResponseDtoList.add(learningProgressResponseDto);
             }
             return learningProgressResponseDtoList;
@@ -138,7 +180,7 @@ public class LearningProgressService {
             Long materialId = (Long) row[0];
             Integer maxProgress = ((Number) row[1]).intValue();
             String summary = (String) row[2];
-            return new ProgressSummaryDTO(materialId, maxProgress,summary);
+            return new ProgressSummaryDTO(materialId, maxProgress, summary);
         }).toList();
     }
 
@@ -146,22 +188,37 @@ public class LearningProgressService {
     public LearningProgressDto updateLearningProgress(Long id, LearningProgressRequestDto updatedLp) {
         LearningProgress existinglp = progressRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("LearningProgress not found"));
-        existinglp.setUpdatedAt(LocalDateTime.now());
-        existinglp.setSummary(updatedLp.getSummary());
-        existinglp.setProgressPercentage(updatedLp.getProgressPercentage());
-        progressRepository.save(existinglp);
+        LearningMaterial material = fetchLearningMaterialById(updatedLp.getLearningMaterial() != null ?
+                updatedLp.getLearningMaterial() : existinglp.getLearningMaterialId());
 
-        return convertToResponseDto(existinglp);
+        if (updatedLp.getProgressPercentage() != null) {
+            existinglp.setProgressPercentage(updatedLp.getProgressPercentage());
+        }
+
+        if (updatedLp.getSummary() != null) {
+            existinglp.setSummary(updatedLp.getSummary());
+        }
+
+        if (updatedLp.getProgressPercentage() != null)
+            existinglp.setProgressPercentage(updatedLp.getProgressPercentage());
+        try {
+            LearningProgress saved = progressRepository.save(existinglp);
+
+            return convertToResponseDto(saved, material);
+        } catch (HttpClientErrorException.NotFound ex) {
+            throw new ResourceNotFoundException("LearningMaterial not found with ID: " + id);
+        } catch (Exception ex) {
+            throw new OperationFailedException("Failed to fetch LearningMaterial", ex);
+        }
     }
 
-    public LearningProgressDto convertToResponseDto(LearningProgress learningProgress) {
+    public LearningProgressDto convertToResponseDto(LearningProgress learningProgress, LearningMaterial material) {
         return LearningProgressDto.builder()
                 .learningProgressId(learningProgress.getId())
-                .user(learningProgress.getUser())
                 .summary(learningProgress.getSummary())
                 .localDate(learningProgress.getUpdatedAt() != null ?
                         learningProgress.getUpdatedAt() : learningProgress.getCreatedAt())
-                .learningMaterial(learningProgress.getLearningMaterial())
+                .learningMaterial(material)
                 .progressPercentage(learningProgress.getProgressPercentage())
                 .build();
 
@@ -177,15 +234,7 @@ public class LearningProgressService {
                 throw new ResourceNotFoundException("No progress history found for userId: " + userId + ", materialId: " + materialId);
             }
 
-            return progressList.stream().map(lp -> {
-                LearningProgressDto dto = new LearningProgressDto();
-                dto.setUser(lp.getUser());
-                dto.setLearningMaterial(lp.getLearningMaterial());
-                dto.setSummary(lp.getSummary());
-                dto.setLocalDate(lp.getCreatedAt());
-                dto.setProgressPercentage(lp.getProgressPercentage());
-                return dto;
-            }).collect(Collectors.toList());
+            return progressList.stream().map(lp -> convertToResponseDto(lp, fetchLearningMaterialById(lp.getLearningMaterialId()))).collect(Collectors.toList());
 
         } catch (ResourceNotFoundException ex) {
             throw ex;

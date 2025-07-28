@@ -13,10 +13,11 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonPropertyOrder({ "Question", "questionStatement", "options" })
+@JsonPropertyOrder({ "Question", "questionStatement", "options","explanation" })
 public class QuestionDto {
     @JsonProperty("Question")
     private int questionNumber;
     private String questionStatement;
     private Map<String, String> options;
+    private String explanation;
 }
